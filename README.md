@@ -30,7 +30,6 @@ npm run dev
 Сборка
 
 npm run build
-npm run build
 
 ---
 
