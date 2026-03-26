@@ -100,18 +100,34 @@ FormErrors: Словарь ошибок валидации (Partial<Record<keyof
 
 Конструктор: constructor(protected events: IEvents) — принимает брокер событий.
 
+Поля: _items: IProduct[], _preview: IProduct | null.
+
 Методы:
 
 setItems(items: IProduct[]): void — запись товаров и уведомление системы.
 
 getProduct(id: string): IProduct | undefined — поиск товара по ID.
 
+preview:
+set preview(item: IProduct | null): void — установка товара для предпросмотра.
+get preview(): IProduct | null — получение текущего товара предпросмотра.
+
 Класс BasketModel
 Управляет состоянием корзины.
 
 Конструктор: constructor(protected events: IEvents)
 
-Методы: add(item), remove(id), clear(), getTotal(), getCount(), hasItem(id).
+Поля: _items: IProduct[].
+
+Методы:
+
+add(item: IProduct): void — добавление товара в корзину.
+remove(id: string): void — удаление товара из корзины по ID.
+clear(): void — очистка корзины.
+getItems(): IProduct[] — получение массива товаров в корзине.
+getTotal(): number — расчет итоговой суммы.
+getCount(): number — количество товаров в корзине.
+hasItem(id: string): boolean — проверка наличия товара в корзине.
 
 Класс OrderModel
 Хранит данные заказа и отвечает за их валидацию.
@@ -125,6 +141,8 @@ getProduct(id: string): IProduct | undefined — поиск товара по ID
 setField(field: keyof IBuyer, value: string): void — запись данных и запуск валидации.
 
 validateOrder(): boolean — проверка полей, заполнение formErrors и генерация события ошибок.
+
+getOrderData(): IBuyer — получение текущих данных заказа.
 
 clearOrder(): void — очистка данных заказа.
 
