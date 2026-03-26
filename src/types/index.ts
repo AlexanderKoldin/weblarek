@@ -1,3 +1,11 @@
+export type EventName = string | RegExp;
+
+export interface IEvents {
+  on<T extends object>(event: EventName, callback: (data: T) => void): void;
+  emit<T extends object>(event: string, data?: T): void;
+  trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
+}
+
 export interface IProduct {
   id: string;
   description: string;
@@ -5,6 +13,11 @@ export interface IProduct {
   title: string;
   category: string;
   price: number | null;
+}
+
+export interface IProductList {
+  total: number;
+  items: IProduct[];
 }
 
 export interface IOrderForm {
@@ -17,7 +30,9 @@ export interface IContactForm {
   phone: string;
 }
 
-export interface IOrder extends IOrderForm, IContactForm {
+export interface IBuyer extends IOrderForm, IContactForm {}
+
+export interface IOrder extends IBuyer {
   total: number;
   items: string[];
 }
@@ -26,3 +41,5 @@ export interface IOrderResult {
   id: string;
   total: number;
 }
+
+export type FormErrors = Partial<Record<keyof IBuyer, string>>;
