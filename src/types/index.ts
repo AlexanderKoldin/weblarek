@@ -1,4 +1,4 @@
-export interface IProdcut {
+export interface IProduct {
   id: string;
   description: string;
   image: string;
@@ -7,7 +7,7 @@ export interface IProdcut {
   price: number | null;
 }
 
-export interface IOrederForm {
+export interface IOrderForm {
   payment: string;
   address: string;
 }
@@ -17,7 +17,7 @@ export interface IContactForm {
   phone: string;
 }
 
-export interface I0rder extends IOrederForm, IContactForm {
+export interface IOrder extends IOrderForm, IContactForm {
   total: number;
   items: string[];
 }
