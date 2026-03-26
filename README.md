@@ -27,11 +27,9 @@ npm install
 npm run dev
 ```
 
-Сборка
+## Сборка
 
 npm run build
-
----
 
 ## Интернет-магазин «Web-Larёk»
 
@@ -41,8 +39,6 @@ npm run build
 - просматривать каталог
 - добавлять товары в корзину
 - оформлять заказы с выбором способа оплаты
-
----
 
 ## Архитектура приложения
 
@@ -61,8 +57,6 @@ npm run build
 Взаимодействие слоев организовано через событийно-ориентированный подход  
 с использованием брокера событий **EventEmitter**.
 
----
-
 ## Базовый код
 
 ### Класс Component
@@ -73,17 +67,17 @@ npm run build
 **Конструктор:**
 
 ```ts
- protected constructor(container: HTMLElement) — принимает корневой DOM-элемент.
+ protected constructor(container: HTMLElement)
 ```
+
+принимает корневой DOM-элемент.
 
 **Методы:**
 
 - `render(data?: Partial<T>): HTMLElement` — обновляет свойства компонента и возвращает его элемент
 - `setImage(element: HTMLImageElement, src: string, alt?: string): void` — устанавливает изображение и альтернативный текст
 
----
-
-### 🌐 Класс Api
+### Класс Api
 
 Содержит базовую логику отправки запросов на сервер.
 
@@ -99,8 +93,6 @@ constructor(baseUrl: string, options: RequestInit = {})
 - `post<T>(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<T>` — POST запрос
 - `handleResponse<T>(response: Response): Promise<T>` — обработка ответа сервера
 
----
-
 ### Класс EventEmitter
 
 Брокер событий (паттерн **«Наблюдатель»**).  
@@ -115,26 +107,35 @@ constructor(baseUrl: string, options: RequestInit = {})
 - `onAll` — слушать всё
 - `offAll` — сброс
 
----
-
 ## Слой данных (Model)
 
 ### Типы данных (Interfaces)
 
-- **IProduct** — характеристики товара  
-  (`id, description, image, title, category, price`)
+**IProduct** — модель отдельного товара в магазине:
 
-- **IBuyer** — данные покупателя  
-  (`payment, email, phone, address`)
+- `id: string` — уникальный идентификатор товара в системе (UUID);
+- `description: string` — полное текстовое описание товара, отображаемое в модальном окне;
+- `image: string` — URL-адрес изображения товара (относительный путь);
+- `title: string` — краткое название товара;
+- `category: string` — категория товара (например, «софт-скил», «хард-скил»);
+- `price: number | null` — стоимость товара в «синапсах». Может быть `null`, если товар нельзя купить.
 
-- **IOrder** — объект заказа  
-  (`total, items: string[] + поля IBuyer`)
+**IBuyer** — данные покупателя:
 
-- **IOrderResult** — ответ сервера  
-  (`id, total`)
+- `payment: PaymentMethod` — выбранный способ оплаты (`card` или `cash`);
+- `address: string` — адрес доставки;
+- `email: string` — контактная электронная почта;
+- `phone: string` — контактный номер телефона.
 
-- **FormErrors** — словарь ошибок валидации  
-  (`Partial<Record<keyof IBuyer, string>>`)
+**IOrder** — полный объект заказа для отправки на сервер:
+
+- Все поля из `IBuyer`;
+- `total: number` — итоговая сумма заказа;
+- `items: string[]` — массив ID выбранных товаров.
+
+**FormErrors** — объект с текстами ошибок валидации:
+
+- `Partial<Record<keyof IBuyer, string>>` — ключами являются поля формы, значениями — текст ошибки.
 
 ## Модели данных
 
@@ -142,87 +143,59 @@ constructor(baseUrl: string, options: RequestInit = {})
 
 Хранит каталог товаров и управляет предпросмотром.
 
-**Конструктор:**
-
-```ts
-constructor(protected events: IEvents) — принимает брокер событий.
-```
-
 **Поля:**
 
-- `_items: IProduct[]`
-- `_preview: IProduct | null`
+- `_items: IProduct[]` — массив товаров;
+- `_preview: IProduct | null` — товар, выбранный для детального просмотра.
 
-**Методы:**
+**Методы и геттеры:**
 
-- `setItems(items: IProduct[]): void` — запись товаров и уведомление системы
-- `getProduct(id: string): IProduct | undefined` — поиск товара по ID
-
-**Preview:**
-
-- `set preview(item: IProduct | null): void` — установка товара для предпросмотра
-- `get preview(): IProduct | null` — получение текущего товара предпросмотра
-
----
+- `setItems(items: IProduct[]): void` — записывает товары в модель и генерирует событие `items:changed`;
+- `get items(): IProduct[]` — геттер для получения списка всех товаров;
+- `getProduct(id: string): IProduct | undefined` — поиск товара по его ID;
+- `set preview(item: IProduct | null)` — устанавливает товар для предпросмотра и генерирует событие `card:select`;
+- `get preview(): IProduct | null` — геттер для получения текущего товара в режиме предпросмотра.
 
 ### Класс BasketModel
 
-Управляет состоянием корзины.
-
-**Конструктор:**
-
-```ts
-constructor(protected events: IEvents)
-```
-
-**Методы:**
-
-- `add(item: IProduct): void` — добавление товара в корзину
-- `remove(id: string): void` — удаление товара из корзины по ID
-- `clear(): void` — очистка корзины
-- `getItems(): IProduct[]` — получение массива товаров в корзине
-- `getTotal(): number` — расчет итоговой суммы
-- `getCount(): number` — количество товаров в корзине
-- `hasItem(id: string): boolean` — проверка наличия товара в корзине
-
-### 🧾 Класс OrderModel
-
-Хранит данные заказа и отвечает за их валидацию.
-
-**Конструктор:**
-
-```ts
-constructor(protected events: IEvents)
-```
+Управляет состоянием корзины (добавление, удаление, расчет стоимости).
 
 **Поля:**
 
-- `_order: IBuyer`
-- `formErrors: FormErrors`
+- `items: IProduct[]` — массив товаров, добавленных в корзину.
 
 **Методы:**
 
-- `setField(field: keyof IBuyer, value: string): void` — запись данных и запуск валидации
-- `validateOrder(): boolean` — проверка полей, заполнение formErrors и генерация события ошибок
-- `getOrderData(): IBuyer` — получение текущих данных заказа
-- `clearOrder(): void` — очистка данных заказа
+- `add(item: IProduct): void` — добавляет товар и уведомляет систему через событие `basket:changed`;
+- `remove(id: string): void` — удаляет товар по ID;
+- `clear(): void` — полная очистка корзины;
+- `getItems(): IProduct[]` — возвращает текущие товары в корзине;
+- `getTotal(): number` — возвращает общую сумму всех товаров;
+- `getCount(): number` — возвращает количество товаров в корзине;
+- `hasItem(id: string): boolean` — проверяет, есть ли уже такой товар в корзине по его ID.
 
----
+### Класс OrderModel
 
-## 🌍 Слой коммуникации (API)
+Отвечает за хранение данных покупателя и их проверку.
 
-### 🔌 Класс LarekApi
+**Поля:**
 
-Расширяет `Api`, предоставляя методы для работы с эндпоинтами магазина.
-
-**Конструктор:**
-
-```ts
-constructor(cdn: string, baseUrl: string, options?: RequestInit)
-```
+- `order: IBuyer` — объект, содержащий данные текущего заказа (способ оплаты, адрес, телефон, почта).
 
 **Методы:**
 
-- `getLotList(): Promise<IProduct[]>` — загрузка каталога
-- `getLotItem(id: string): Promise<IProduct>` — получение данных одного товара
-- `orderLots(order: IOrder): Promise<IOrderResult>` — оформление заказа
+- `setField(field: keyof IBuyer, value: string): void` — устанавливает значение в поле заказа и генерирует событие `order:changed`;
+- `validateOrder(): FormErrors` — проверяет данные покупателя на заполнение. Возвращает объект с текстами ошибок для незаполненных полей. Метод не изменяет состояние модели (чистая функция);
+- `getOrderData(): IBuyer` — возвращает текущий объект данных заказа;
+- `clearOrder(): void` — сбрасывает все данные заказа до начального состояния.
+
+## Слой коммуникации (API)
+
+### Класс LarekApi
+
+Предоставляет методы для взаимодействия с серверной частью магазина.
+
+**Методы:**
+
+- `getLotList(): Promise<IProduct[]>` — получает полный список товаров с сервера;
+- `orderLots(order: IOrder): Promise<IOrderResult>` — отправляет сформированный заказ на сервер и возвращает результат (ID и сумму).

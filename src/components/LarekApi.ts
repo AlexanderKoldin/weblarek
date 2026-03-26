@@ -3,7 +3,6 @@ import { Api } from './base/Api';
 
 export interface ILarekApi {
   getLotList: () => Promise<IProduct[]>;
-  getLotItem: (id: string) => Promise<IProduct>;
   orderLots: (order: IOrder) => Promise<IOrderResult>;
 }
 
@@ -24,14 +23,7 @@ export class LarekApi extends Api implements ILarekApi {
     );
   }
 
-  getLotItem(id: string): Promise<IProduct> {
-    return this.get<IProduct>(`/product/${id}`).then((item) => ({
-      ...item,
-      image: this.cdn + item.image,
-    }));
-  }
-
   orderLots(order: IOrder): Promise<IOrderResult> {
-    return this.post<IOrderResult>('/order', order).then((data) => data);
+    return this.post<IOrderResult>('/order', order);
   }
 }

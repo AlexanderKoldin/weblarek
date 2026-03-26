@@ -8,12 +8,7 @@ export class CatalogModel {
 
   setItems(items: IProduct[]): void {
     this._items = items;
-
     this.events.emit('items:changed', { items: this._items });
-  }
-
-  getItems(): IProduct[] {
-    return this._items;
   }
 
   get items(): IProduct[] {

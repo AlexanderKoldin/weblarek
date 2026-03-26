@@ -1,12 +1,8 @@
-import { IContactForm, IEvents, IOrderForm } from '../../types';
-
-export type IBuyer = IOrderForm & IContactForm;
+import { FormErrors, IBuyer, IEvents, PaymentMethod } from '../../types';
 
 export class OrderModel {
-  formErrors: Partial<Record<keyof IBuyer, string>> = {};
-
-  protected _order: IBuyer = {
-    payment: '',
+  protected order: IBuyer = {
+    payment: '' as PaymentMethod,
     address: '',
     email: '',
     phone: '',
@@ -15,45 +11,46 @@ export class OrderModel {
   constructor(protected events: IEvents) {}
 
   setField(field: keyof IBuyer, value: string): void {
-    this._order[field] = value;
+    if (field === 'payment') {
+      this.order[field] = value as PaymentMethod;
+    } else {
+      this.order[field] = value;
+    }
 
-    this.validateOrder();
+    this.events.emit('order:changed', this.order);
   }
 
-  getOrderData() {
-    return this._order;
+  getOrderData(): IBuyer {
+    return this.order;
   }
 
-  validateOrder(): boolean {
-    const errors: typeof this.formErrors = {};
+  validateOrder(): FormErrors {
+    const errors: FormErrors = {};
 
-    if (!this._order.address.trim()) {
+    if (!this.order.address.trim()) {
       errors.address = 'Необходимо указать адрес';
     }
-    if (!this._order.email.trim()) {
+    if (!this.order.email.trim()) {
       errors.email = 'Необходимо указать email';
     }
-    if (!this._order.phone.trim()) {
+    if (!this.order.phone.trim()) {
       errors.phone = 'Необходимо указать телефон';
     }
-    if (!this._order.payment) {
+    if (!this.order.payment) {
       errors.payment = 'Необходимо выбрать способ оплаты';
     }
 
-    this.formErrors = errors;
-
-    this.events.emit('formErrors:changed', this.formErrors);
-
-    return Object.keys(errors).length === 0;
+    return errors;
   }
 
   clearOrder(): void {
-    this._order = {
-      payment: '',
+    this.order = {
+      payment: '' as PaymentMethod,
       address: '',
       email: '',
       phone: '',
     };
-    this.formErrors = {};
+
+    this.events.emit('order:changed', this.order);
   }
 }
