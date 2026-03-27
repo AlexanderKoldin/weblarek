@@ -9,6 +9,12 @@ export interface ILarekApi {
 export class LarekApi extends Api implements ILarekApi {
   readonly cdn: string;
 
+  /**
+   * @param cdn - Базовый путь до изображений
+   * @param baseUrl - Базовый URL сервера
+   * @param options - Опции запроса (заголовки и т.д.)
+   */
+
   constructor(cdn: string, baseUrl: string, options?: RequestInit) {
     super(baseUrl, options);
     this.cdn = cdn;
@@ -18,6 +24,7 @@ export class LarekApi extends Api implements ILarekApi {
     return this.get<IProductList>('/product').then((data) =>
       data.items.map((item) => ({
         ...item,
+
         image: this.cdn + item.image,
       })),
     );

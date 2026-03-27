@@ -1,10 +1,12 @@
 import './scss/styles.scss';
 
 import { EventEmitter } from './components/base/Events';
+import { LarekApi } from './components/LarekApi';
 import { BasketModel } from './components/Models/BasketModel';
 import { CatalogModel } from './components/Models/CatalogModel';
 import { OrderModel } from './components/Models/OrderModel';
 import { IProduct } from './types';
+import { API_URL, CDN_URL } from './utils/constants'; // Добавили CDN_URL
 import { mockProducts } from './utils/mocks';
 
 const events = new EventEmitter();
@@ -12,74 +14,59 @@ const catalog = new CatalogModel(events);
 const basket = new BasketModel(events);
 const order = new OrderModel(events);
 
+const api = new LarekApi(CDN_URL, API_URL);
+
 events.onAll((event) => {
   console.log(`[Событие]: ${event.eventName}`, event.data);
 });
 
 const testModels = (items: IProduct[]) => {
-  console.group('CatalogModel: тест методов');
+  console.group('--- Тест моделей на МОКАХ ---');
+
   catalog.setItems(items);
+  console.log('CatalogModel: данные установлены');
 
-  console.log('setItems(items) -> items:', catalog.items);
+  const item1 = catalog.items[0];
+  const item2 = catalog.items[1];
 
-  const itemsFromCatalog = catalog.items;
-  console.log('items -> количество:', itemsFromCatalog.length);
+  if (item1 && item2) {
+    basket.add(item1);
+    basket.add(item2);
+    console.log('Корзина после добавления 2-х товаров:', basket.getItems());
+    console.log('Итоговая сумма:', basket.getTotal());
 
-  const firstProduct = catalog.getProduct(itemsFromCatalog[0]?.id ?? '');
-  console.log('getProduct(firstId) ->', firstProduct);
+    basket.remove(item1.id);
+    console.log(`После удаления ${item1.title}. Текущий список:`, basket.getItems());
 
-  const previewItem = itemsFromCatalog[1] ?? itemsFromCatalog[0] ?? null;
-  catalog.preview = previewItem;
-  console.log('preview = item -> catalog.preview:', catalog.preview);
-  console.groupEnd();
+    basket.clear();
+    console.log('После clear(). Список покупок (ожидаем пустой):', basket.getItems());
+  }
 
-  console.group('BasketModel: тест методов');
-
-  const basketItemsInitial = basket.getItems();
-  console.log('getItems() [initial] ->', basketItemsInitial);
-
-  const fallbackProduct: IProduct = {
-    id: 'fallback-id',
-    description: 'fallback-description',
-    image: '',
-    title: 'fallback-title',
-    category: 'fallback-category',
-    price: null,
-  };
-  const itemForBasket = previewItem ?? fallbackProduct;
-
-  basket.add(itemForBasket);
-  console.log('add(item) -> getCount():', basket.getCount());
-  console.log('add(item) -> hasItem(id):', basket.hasItem(itemForBasket.id));
-  console.log('add(item) -> getItems():', basket.getItems());
-  console.log('add(item) -> getTotal():', basket.getTotal());
-
-  basket.remove(itemForBasket.id);
-  console.log('remove(id) -> hasItem(id):', basket.hasItem(itemForBasket.id));
-  console.log('remove(id) -> getCount():', basket.getCount());
-
-  basket.add(itemForBasket);
-  basket.clear();
-  console.log('clear() -> getCount после очистки:', basket.getCount());
-  console.groupEnd();
-
-  console.group('OrderModel: тест методов');
-  order.setField('email', 'test@test.ru');
-  order.setField('address', 'ул. Тестовая, д. 1');
   order.setField('payment', 'card');
-  order.setField('phone', '+79990000000');
+  order.setField('address', 'ул. Тестовая, д. 1');
+  console.log('Данные заказа перед валидацией:', order.getOrderData());
+  console.log('Ошибки (ожидаем email/phone):', order.validateOrder());
 
-  const errors = order.validateOrder();
-  const isValid = Object.keys(errors).length === 0;
-
-  console.log('validateOrder() ->', isValid ? 'Валидно' : 'Ошибка');
-  console.log('validateOrder() -> тексты ошибок (если есть):', errors);
-
-  order.clearOrder();
-  console.log('clearOrder() -> данные после очистки:', order.getOrderData());
   console.groupEnd();
-
-  console.log('Все методы моделей покрыты тестовым стендом на МОКОВЫХ данных!');
 };
 
 testModels(mockProducts);
+
+console.group('--- Тест API: сетевой запрос ---');
+
+api
+  .getLotList()
+  .then((items) => {
+    console.log('Данные успешно получены с сервера:', items);
+
+    catalog.setItems(items);
+
+    console.log('Каталог в модели после обновления из API:', catalog.items);
+    console.log('Сетевой тест завершен успешно!');
+  })
+  .catch((err) => {
+    console.error('Ошибка при работе с API:', err);
+  })
+  .finally(() => {
+    console.groupEnd();
+  });
