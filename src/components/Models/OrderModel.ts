@@ -1,8 +1,8 @@
-import { FormErrors, IBuyer, IEvents, PaymentMethod } from '../../types';
+import { FormErrors, IBuyer, IEvents } from '../../types';
 
 export class OrderModel {
   protected order: IBuyer = {
-    payment: '' as PaymentMethod,
+    payment: '',
     address: '',
     email: '',
     phone: '',
@@ -12,7 +12,9 @@ export class OrderModel {
 
   setField(field: keyof IBuyer, value: string): void {
     if (field === 'payment') {
-      this.order[field] = value as PaymentMethod;
+      if (value === 'card' || value === 'cash' || value === '') {
+        this.order[field] = value;
+      }
     } else {
       this.order[field] = value;
     }
@@ -36,6 +38,7 @@ export class OrderModel {
     if (!this.order.phone.trim()) {
       errors.phone = 'Необходимо указать телефон';
     }
+
     if (!this.order.payment) {
       errors.payment = 'Необходимо выбрать способ оплаты';
     }
@@ -45,7 +48,7 @@ export class OrderModel {
 
   clearOrder(): void {
     this.order = {
-      payment: '' as PaymentMethod,
+      payment: '',
       address: '',
       email: '',
       phone: '',

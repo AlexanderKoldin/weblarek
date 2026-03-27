@@ -20,7 +20,7 @@ export interface IProductList {
   items: IProduct[];
 }
 
-export type PaymentMethod = 'card' | 'cash';
+export type PaymentMethod = 'card' | 'cash' | '';
 
 export interface IOrderForm {
   payment: PaymentMethod;
