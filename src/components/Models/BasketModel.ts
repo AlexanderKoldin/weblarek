@@ -1,38 +1,39 @@
-import { IEvents, IProduct } from '../../types';
+import { IProduct } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class BasketModel {
-  protected items: IProduct[] = [];
+  protected _items: IProduct[] = [];
 
   constructor(protected events: IEvents) {}
 
-  add(item: IProduct): void {
-    this.items.push(item);
-    this.events.emit('basket:changed', { items: this.items });
-  }
-
-  remove(id: string): void {
-    this.items = this.items.filter((item) => item.id !== id);
-    this.events.emit('basket:changed', { items: this.items });
-  }
-
-  clear(): void {
-    this.items = [];
-    this.events.emit('basket:changed', { items: this.items });
-  }
-
   getItems(): IProduct[] {
-    return this.items;
-  }
-
-  getTotal(): number {
-    return this.items.reduce((acc, item) => acc + (item.price || 0), 0);
+    return this._items;
   }
 
   getCount(): number {
-    return this.items.length;
+    return this._items.length;
+  }
+
+  getTotal(): number {
+    return this._items.reduce((sum, item) => sum + (item.price || 0), 0);
+  }
+
+  add(item: IProduct): void {
+    this._items.push(item);
+    this.events.emit('basket:changed');
+  }
+
+  remove(id: string): void {
+    this._items = this._items.filter((item) => item.id !== id);
+    this.events.emit('basket:changed');
   }
 
   hasItem(id: string): boolean {
-    return this.items.some((item) => item.id === id);
+    return this._items.some((item) => item.id === id);
+  }
+
+  clear(): void {
+    this._items = [];
+    this.events.emit('basket:changed');
   }
 }
