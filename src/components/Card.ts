@@ -84,11 +84,16 @@ export class CardPreview extends CardCatalog<{ button: string; description: stri
   }
 
   set button(value: string) {
-    this.setText(this._button, value);
+    if (this._button.disabled) {
+      this.setText(this._button, 'Недоступно');
+    } else {
+      this.setText(this._button, value);
+    }
   }
 
   set price(value: number | null) {
     super.price = value;
+
     if (value === null) {
       this.setText(this._button, 'Недоступно');
       this.setDisabled(this._button, true);
