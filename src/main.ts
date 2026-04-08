@@ -11,7 +11,8 @@ import { API_URL, CDN_URL } from './utils/constants';
 import { Modal } from './components/base/Modal';
 import { Success } from './components/base/Success';
 import { Basket } from './components/Basket';
-import { Card } from './components/Card';
+
+import { CardBasket, CardCatalog, CardPreview } from './components/Card';
 import { Contacts } from './components/Contacts';
 import { Order } from './components/Order';
 import { Page } from './components/Page';
@@ -41,7 +42,7 @@ const contactsView = new Contacts(cloneTemplate(contactsTemplate), events);
 
 events.on('items:changed', () => {
   page.catalog = catalogModel.items.map((item) => {
-    const card = new Card(cloneTemplate(cardCatalogTemplate), {
+    const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), {
       onClick: () => events.emit('card:select', item),
     });
     return card.render({
@@ -54,7 +55,7 @@ events.on('items:changed', () => {
 });
 
 events.on('card:select', (item: IProduct) => {
-  const card = new Card(cloneTemplate(cardPreviewTemplate), {
+  const card = new CardPreview(cloneTemplate(cardPreviewTemplate), {
     onClick: () => {
       if (basketModel.hasItem(item.id)) {
         basketModel.remove(item.id);
@@ -86,7 +87,7 @@ events.on('basket:open', () => {
 events.on('basket:changed', () => {
   page.counter = basketModel.getCount();
   basketView.items = basketModel.getItems().map((item, index) => {
-    const card = new Card(cloneTemplate(cardBasketTemplate), {
+    const card = new CardBasket(cloneTemplate(cardBasketTemplate), {
       onClick: () => basketModel.remove(item.id),
     });
     return card.render({
@@ -111,7 +112,6 @@ events.on('order:open', () => {
 
 events.on('formErrors:change', (errors: Partial<IBuyer>) => {
   const { payment, address, email, phone } = errors;
-
   orderView.valid = !payment && !address;
   orderView.errors = [payment, address].filter(Boolean).join('; ');
 
@@ -120,13 +120,6 @@ events.on('formErrors:change', (errors: Partial<IBuyer>) => {
 });
 
 events.on(/^order\..*:change|^contacts\..*:change/, (data: { field: keyof IBuyer; value: string }) => {
-  if (data.field === 'phone') {
-    data.value = data.value.replace(/[^0-9+()\- ]/g, '');
-    const phoneInput = document.querySelector('input[name="phone"]') as HTMLInputElement;
-    if (phoneInput) {
-      phoneInput.value = data.value;
-    }
-  }
   orderModel.setField(data.field, data.value);
 });
 
