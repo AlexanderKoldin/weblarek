@@ -25,7 +25,7 @@ export class Card<T = {}> extends Component<IProduct & T> {
   }
 
   set price(value: number | null) {
-    this.setText(this._price, value ? `${value} синапсов` : 'Бесценно');
+    this.setText(this._price, value !== null ? `${value} синапсов` : 'Бесценно');
   }
 }
 
@@ -53,7 +53,13 @@ export class CardCatalog<T = {}> extends Card<T> {
 
   set category(value: string) {
     this.setText(this._category, value);
-    const cls = this.categoryClasses[value] || 'card__category_other';
+
+    Object.values(this.categoryClasses).forEach((cls) => {
+      this.toggleClass(this._category, cls, false);
+    });
+
+    const categoryKey = value.toLowerCase();
+    const cls = this.categoryClasses[categoryKey] || 'card__category_other';
     this.toggleClass(this._category, cls, true);
   }
 }
@@ -66,6 +72,11 @@ export class CardPreview extends CardCatalog<{ button: string; description: stri
     super(container, actions);
     this._description = ensureElement<HTMLElement>('.card__text', container);
     this._button = ensureElement<HTMLButtonElement>('.card__button', container);
+
+    if (actions?.onClick) {
+      container.removeEventListener('click', actions.onClick);
+      this._button.addEventListener('click', actions.onClick);
+    }
   }
 
   set description(value: string) {
@@ -81,6 +92,8 @@ export class CardPreview extends CardCatalog<{ button: string; description: stri
     if (value === null) {
       this.setText(this._button, 'Недоступно');
       this.setDisabled(this._button, true);
+    } else {
+      this.setDisabled(this._button, false);
     }
   }
 }

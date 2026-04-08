@@ -15,7 +15,9 @@ import { Basket } from './components/Basket';
 import { CardBasket, CardCatalog, CardPreview } from './components/Card';
 import { Contacts } from './components/Contacts';
 import { Order } from './components/Order';
-import { Page } from './components/Page';
+
+import { Gallery } from './components/Gallery';
+import { Header } from './components/Header';
 import { cloneTemplate } from './utils/utils';
 
 const events = new EventEmitter();
@@ -25,8 +27,10 @@ const catalogModel = new CatalogModel(events);
 const basketModel = new BasketModel(events);
 const orderModel = new OrderModel(events);
 
-const page = new Page(document.body, events);
+const header = new Header(document.querySelector('.header')!, events);
+const gallery = new Gallery(document.querySelector('.gallery')!);
 const modal = new Modal(document.querySelector('#modal-container')!, events);
+const pageWrapper = document.querySelector('.page__wrapper')!;
 
 const cardCatalogTemplate = document.querySelector('#card-catalog') as HTMLTemplateElement;
 const cardPreviewTemplate = document.querySelector('#card-preview') as HTMLTemplateElement;
@@ -40,42 +44,42 @@ const basketView = new Basket(cloneTemplate(basketTemplate), events);
 const orderView = new Order(cloneTemplate(orderTemplate), events);
 const contactsView = new Contacts(cloneTemplate(contactsTemplate), events);
 
+const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), {
+  onClick: () => events.emit('card:toBasket'),
+});
+
 events.on('items:changed', () => {
-  page.catalog = catalogModel.items.map((item) => {
+  gallery.items = catalogModel.items.map((item) => {
     const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), {
-      onClick: () => events.emit('card:select', item),
+      onClick: () => catalogModel.setPreview(item),
     });
-    return card.render({
-      title: item.title,
-      image: item.image,
-      category: item.category,
-      price: item.price,
-    });
+    return card.render(item);
   });
 });
 
-events.on('card:select', (item: IProduct) => {
-  const card = new CardPreview(cloneTemplate(cardPreviewTemplate), {
-    onClick: () => {
-      if (basketModel.hasItem(item.id)) {
-        basketModel.remove(item.id);
-      } else {
-        basketModel.add(item);
-      }
-      card.button = basketModel.hasItem(item.id) ? 'Удалить из корзины' : 'Купить';
-    },
-  });
-
+events.on('card:preview_changed', (item: IProduct) => {
   modal.render({
-    content: card.render({
-      title: item.title,
-      image: item.image,
-      category: item.category,
-      description: item.description,
-      price: item.price,
+    content: cardPreview.render({
+      ...item,
       button: basketModel.hasItem(item.id) ? 'Удалить из корзины' : 'Купить',
     }),
   });
+});
+
+events.on('card:toBasket', () => {
+  const item = catalogModel.getSelectedCard();
+  if (item && item.price !== null) {
+    if (basketModel.hasItem(item.id)) {
+      basketModel.remove(item.id);
+    } else {
+      basketModel.add(item);
+    }
+
+    cardPreview.render({
+      ...item,
+      button: basketModel.hasItem(item.id) ? 'Удалить из корзины' : 'Купить',
+    });
+  }
 });
 
 events.on('basket:open', () => {
@@ -85,14 +89,13 @@ events.on('basket:open', () => {
 });
 
 events.on('basket:changed', () => {
-  page.counter = basketModel.getCount();
+  header.counter = basketModel.getCount();
   basketView.items = basketModel.getItems().map((item, index) => {
     const card = new CardBasket(cloneTemplate(cardBasketTemplate), {
       onClick: () => basketModel.remove(item.id),
     });
     return card.render({
-      title: item.title,
-      price: item.price,
+      ...item,
       index: (index + 1).toString(),
     });
   });
@@ -121,6 +124,7 @@ events.on('formErrors:change', (errors: Partial<IBuyer>) => {
 
 events.on(/^order\..*:change|^contacts\..*:change/, (data: { field: keyof IBuyer; value: string }) => {
   orderModel.setField(data.field, data.value);
+  if (data.field === 'payment') orderView.payment = data.value;
 });
 
 events.on('order:submit', () => {
@@ -145,36 +149,21 @@ events.on('contacts:submit', () => {
     .orderLots(orderData)
     .then((result) => {
       const successView = new Success(cloneTemplate(successTemplate), {
-        onClick: () => {
-          modal.close();
-        },
+        onClick: () => modal.close(),
       });
-
       modal.render({
-        content: successView.render({
-          total: result.total,
-        }),
+        content: successView.render({ total: result.total }),
       });
-
       basketModel.clear();
       orderModel.clearOrder();
     })
-    .catch((err) => {
-      console.error(err);
-    });
+    .catch(console.error);
 });
 
-events.on('modal:open', () => {
-  page.locked = true;
-});
-
-events.on('modal:close', () => {
-  page.locked = false;
-});
+events.on('modal:open', () => pageWrapper.classList.add('page__wrapper_locked'));
+events.on('modal:close', () => pageWrapper.classList.remove('page__wrapper_locked'));
 
 api
   .getLotList()
-  .then((items) => {
-    catalogModel.setItems(items);
-  })
+  .then((items) => catalogModel.setItems(items))
   .catch(console.error);
