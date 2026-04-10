@@ -12,7 +12,9 @@ import { Modal } from './components/base/Modal';
 import { Success } from './components/base/Success';
 import { Basket } from './components/Basket';
 
-import { CardBasket, CardCatalog, CardPreview } from './components/Card';
+import { CardBasket } from './components/Card/CardBasket';
+import { CardCatalog } from './components/Card/CardCatalog';
+import { CardPreview } from './components/Card/CardPreview';
 import { Contacts } from './components/Contacts';
 import { Order } from './components/Order';
 
@@ -44,17 +46,20 @@ const basketView = new Basket(cloneTemplate(basketTemplate), events);
 const orderView = new Order(cloneTemplate(orderTemplate), events);
 const contactsView = new Contacts(cloneTemplate(contactsTemplate), events);
 
-const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), {
-  onClick: () => events.emit('card:toBasket'),
-});
+const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), events);
 
 events.on('items:changed', () => {
   gallery.items = catalogModel.items.map((item) => {
-    const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), {
-      onClick: () => catalogModel.setPreview(item),
-    });
+    const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), events);
     return card.render(item);
   });
+});
+
+events.on('card:select', (data: { id: string }) => {
+  const item = catalogModel.items.find((i) => i.id === data.id);
+  if (item) {
+    catalogModel.setPreview(item);
+  }
 });
 
 events.on('card:preview_changed', (item: IProduct) => {
@@ -62,12 +67,12 @@ events.on('card:preview_changed', (item: IProduct) => {
     content: cardPreview.render({
       ...item,
       button: basketModel.hasItem(item.id) ? 'Удалить из корзины' : 'Купить',
-    }),
+    } as object),
   });
 });
 
-events.on('card:toBasket', () => {
-  const item = catalogModel.getSelectedCard();
+events.on('card:add', (data: { id: string }) => {
+  const item = catalogModel.items.find((i) => i.id === data.id);
   if (item && item.price !== null) {
     if (basketModel.hasItem(item.id)) {
       basketModel.remove(item.id);
@@ -78,7 +83,7 @@ events.on('card:toBasket', () => {
     cardPreview.render({
       ...item,
       button: basketModel.hasItem(item.id) ? 'Удалить из корзины' : 'Купить',
-    });
+    } as object);
   }
 });
 
@@ -91,15 +96,17 @@ events.on('basket:open', () => {
 events.on('basket:changed', () => {
   header.counter = basketModel.getCount();
   basketView.items = basketModel.getItems().map((item, index) => {
-    const card = new CardBasket(cloneTemplate(cardBasketTemplate), {
-      onClick: () => basketModel.remove(item.id),
-    });
+    const card = new CardBasket(cloneTemplate(cardBasketTemplate), events);
     return card.render({
       ...item,
       index: (index + 1).toString(),
     });
   });
   basketView.total = basketModel.getTotal();
+});
+
+events.on('card:remove', (data: { id: string }) => {
+  basketModel.remove(data.id);
 });
 
 events.on('order:open', () => {
