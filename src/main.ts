@@ -47,11 +47,7 @@ const orderView = new Order(cloneTemplate(orderTemplate), events);
 const contactsView = new Contacts(cloneTemplate(contactsTemplate), events);
 
 const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), {
-  onClick: () => {
-    if (catalogModel.preview) {
-      events.emit('card:add', { id: catalogModel.preview.id });
-    }
-  },
+  onClick: () => events.emit('card:add'),
 });
 
 events.on('items:changed', () => {
@@ -79,8 +75,8 @@ events.on('card:preview_changed', (item: IProduct) => {
   });
 });
 
-events.on('card:add', (data: { id: string }) => {
-  const item = catalogModel.items.find((i) => i.id === data.id);
+events.on('card:add', () => {
+  const item = catalogModel.preview;
   if (item && item.price !== null) {
     if (basketModel.hasItem(item.id)) {
       basketModel.remove(item.id);
