@@ -46,11 +46,19 @@ const basketView = new Basket(cloneTemplate(basketTemplate), events);
 const orderView = new Order(cloneTemplate(orderTemplate), events);
 const contactsView = new Contacts(cloneTemplate(contactsTemplate), events);
 
-const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), events);
+const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), {
+  onClick: () => {
+    if (catalogModel.preview) {
+      events.emit('card:add', { id: catalogModel.preview.id });
+    }
+  },
+});
 
 events.on('items:changed', () => {
   gallery.items = catalogModel.items.map((item) => {
-    const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), events);
+    const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), {
+      onClick: () => events.emit('card:select', { id: item.id }),
+    });
     return card.render(item);
   });
 });
@@ -96,7 +104,9 @@ events.on('basket:open', () => {
 events.on('basket:changed', () => {
   header.counter = basketModel.getCount();
   basketView.items = basketModel.getItems().map((item, index) => {
-    const card = new CardBasket(cloneTemplate(cardBasketTemplate), events);
+    const card = new CardBasket(cloneTemplate(cardBasketTemplate), {
+      onClick: () => events.emit('card:remove', { id: item.id }),
+    });
     return card.render({
       ...item,
       index: (index + 1).toString(),

@@ -21,6 +21,10 @@ export class CatalogModel {
     this.events.emit('card:preview_changed', item);
   }
 
+  get preview() {
+    return this._selectedCard;
+  }
+
   getSelectedCard() {
     return this._selectedCard;
   }

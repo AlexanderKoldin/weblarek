@@ -1,6 +1,5 @@
 import { ensureElement } from '../../utils/utils';
-import { IEvents } from '../base/Events';
-import { Card } from './Card';
+import { Card, ICardActions } from './Card';
 
 export class CardCatalog extends Card {
   protected _image: HTMLImageElement;
@@ -14,10 +13,9 @@ export class CardCatalog extends Card {
     кнопка: 'card__category_button',
   };
 
-  constructor(container: HTMLElement, events: IEvents) {
-    super(container, {
-      onClick: () => events.emit('card:select', { id: this.id }),
-    });
+  constructor(container: HTMLElement, actions?: ICardActions) {
+    super(container, actions);
+
     this._image = ensureElement<HTMLImageElement>('.card__image', container);
     this._category = ensureElement<HTMLElement>('.card__category', container);
   }
@@ -28,9 +26,11 @@ export class CardCatalog extends Card {
 
   set category(value: string) {
     this.setText(this._category, value);
+
     Object.values(this.categoryClasses).forEach((cls) => {
       this.toggleClass(this._category, cls, false);
     });
+
     const categoryKey = value.toLowerCase();
     const cls = this.categoryClasses[categoryKey] || 'card__category_other';
     this.toggleClass(this._category, cls, true);

@@ -9,14 +9,22 @@ export interface ICardActions {
 export class Card<T = {}> extends Component<IProduct & T> {
   protected _title: HTMLElement;
   protected _price: HTMLElement;
+  protected _button?: HTMLButtonElement | null;
 
   constructor(container: HTMLElement, actions?: ICardActions) {
     super(container);
+
     this._title = ensureElement<HTMLElement>('.card__title', container);
     this._price = ensureElement<HTMLElement>('.card__price', container);
 
+    this._button = container.querySelector('.card__button');
+
     if (actions?.onClick) {
-      container.addEventListener('click', actions.onClick);
+      if (this._button) {
+        this._button.addEventListener('click', actions.onClick);
+      } else {
+        container.addEventListener('click', actions.onClick);
+      }
     }
   }
 

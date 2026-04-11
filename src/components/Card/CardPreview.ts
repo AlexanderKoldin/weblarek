@@ -1,21 +1,16 @@
 import { ensureElement } from '../../utils/utils';
-import { IEvents } from '../base/Events';
+import { ICardActions } from './Card';
 import { CardCatalog } from './CardCatalog';
 
 export class CardPreview extends CardCatalog {
   protected _description: HTMLElement;
   protected _button: HTMLButtonElement;
 
-  constructor(container: HTMLElement, events: IEvents) {
-    super(container, events);
+  constructor(container: HTMLElement, actions?: ICardActions) {
+    super(container, actions);
+
     this._description = ensureElement<HTMLElement>('.card__text', container);
     this._button = ensureElement<HTMLButtonElement>('.card__button', container);
-
-    this.container.onclick = (e) => e.stopPropagation();
-
-    this._button.addEventListener('click', () => {
-      events.emit('card:add', { id: this.id });
-    });
   }
 
   set description(value: string) {
@@ -28,6 +23,7 @@ export class CardPreview extends CardCatalog {
 
   set price(value: number | null) {
     super.price = value;
+
     if (value === null) {
       this.setText(this._button, 'Недоступно');
       this.setDisabled(this._button, true);
